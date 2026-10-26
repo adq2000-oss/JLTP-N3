@@ -1,0 +1,1077 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <title>KOTOBA 5회독 단어장</title>
+  
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+
+  <style>
+    html, body {
+      height: 100%;
+      height: 100dvh;
+      overflow: hidden;
+      touch-action: manipulation;
+      user-select: none;
+      -webkit-user-select: none;
+      background-color: #0b0f17;
+      font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+    }
+
+    ::-webkit-scrollbar { display: none; }
+    * { -ms-overflow-style: none; scrollbar-width: none; }
+
+    ruby { ruby-align: center; }
+    rt {
+      font-size: 0.65em;
+      color: #38bdf8;
+      font-weight: 600;
+      user-select: none;
+    }
+    .furi-hidden rt { display: none; }
+    button, div { -webkit-tap-highlight-color: transparent; }
+  </style>
+</head>
+
+<body class="text-slate-100 flex flex-col justify-between p-3 select-none">
+
+  <!-- ================= TOP: 헤더 및 Day/회독 선택 바 ================= -->
+  <header class="flex flex-col gap-2 shrink-0">
+    <!-- 헤더 타이틀 바 (1줄 고정) -->
+    <div class="flex items-center justify-between">
+      <div class="flex items-center gap-2">
+        <div class="w-8 h-8 rounded-xl bg-gradient-to-tr from-amber-500 to-rose-500 flex items-center justify-center font-black text-sm text-white shadow-sm">5회</div>
+        <div class="flex items-center gap-1.5">
+          <span class="font-bold text-base tracking-tight text-white">KOTOBA</span>
+          <span id="currentRoundBadge" class="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/40">1회독</span>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-1.5">
+        <button onclick="openModal('pwaModal')" class="w-8 h-8 rounded-lg bg-slate-800 text-slate-300 flex items-center justify-center border border-slate-700 active:bg-slate-700" title="바탕화면 설치">
+          <i class="fa-solid fa-mobile-screen text-xs"></i>
+        </button>
+        <button id="ttsToggleBtn" onclick="toggleTTS()" class="w-8 h-8 rounded-lg bg-slate-800 text-emerald-400 flex items-center justify-center border border-slate-700 active:bg-slate-700" title="자동 발음">
+          <i class="fa-solid fa-volume-high text-xs"></i>
+        </button>
+        <button onclick="openManageModal()" class="h-8 px-2.5 rounded-lg bg-rose-600 hover:bg-rose-500 text-white flex items-center gap-1 text-xs font-bold shadow-sm active:bg-rose-700">
+          <i class="fa-solid fa-book-bookmark text-xs"></i>
+          <span>단어 관리</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Day 선택 및 회독 탭 -->
+    <div class="bg-slate-900/95 border border-slate-800 rounded-xl p-2 flex flex-col gap-1.5 shadow-sm">
+      <div class="flex items-center justify-between text-[11px] text-slate-400 px-0.5">
+        <span class="flex items-center gap-1 font-medium"><i class="fa-solid fa-layer-group text-rose-400"></i>학습 범위: <b id="selectedDaysLabel" class="text-slate-200">Day 1~15</b></span>
+        <button onclick="openModal('customDayModal')" class="text-rose-400 font-semibold hover:underline flex items-center gap-0.5">
+          <i class="fa-solid fa-sliders text-[10px]"></i>직접 입력
+        </button>
+      </div>
+
+      <!-- 4분할 토글 칩 -->
+      <div class="grid grid-cols-4 gap-1.5">
+        <button onclick="toggleDayChunk('1-15')" id="chunk-1-15" class="chunk-btn py-1 rounded-lg text-xs font-bold border border-rose-500/50 bg-rose-500/20 text-rose-300">1~15</button>
+        <button onclick="toggleDayChunk('16-25')" id="chunk-16-25" class="chunk-btn py-1 rounded-lg text-xs font-bold border border-slate-800 bg-slate-800/60 text-slate-400">16~25</button>
+        <button onclick="toggleDayChunk('26-35')" id="chunk-26-35" class="chunk-btn py-1 rounded-lg text-xs font-bold border border-slate-800 bg-slate-800/60 text-slate-400">26~35</button>
+        <button onclick="toggleDayChunk('36-45')" id="chunk-36-45" class="chunk-btn py-1 rounded-lg text-xs font-bold border border-slate-800 bg-slate-800/60 text-slate-400">36~45</button>
+      </div>
+
+      <!-- 1~5회독 체인 탭 -->
+      <div class="flex items-center justify-between pt-1 border-t border-slate-800/70">
+        <div class="flex gap-1" id="roundTabs">
+          <button onclick="changeRound(1)" class="round-btn px-2 py-0.5 rounded text-xs font-black bg-amber-500 text-slate-950">1회</button>
+          <button onclick="changeRound(2)" class="round-btn px-2 py-0.5 rounded text-xs font-bold bg-slate-800 text-slate-400">2회</button>
+          <button onclick="changeRound(3)" class="round-btn px-2 py-0.5 rounded text-xs font-bold bg-slate-800 text-slate-400">3회</button>
+          <button onclick="changeRound(4)" class="round-btn px-2 py-0.5 rounded text-xs font-bold bg-slate-800 text-slate-400">4회</button>
+          <button onclick="changeRound(5)" class="round-btn px-2 py-0.5 rounded text-xs font-bold bg-slate-800 text-slate-400">5회</button>
+        </div>
+        <div class="text-[11px] text-slate-400 font-medium">
+          대상: <span id="targetCountText" class="text-amber-400 font-bold">0</span>단어
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- ================= MIDDLE: 플래시카드 본체 (컴팩트 높이, 스크롤 방지) ================= -->
+  <main class="flex-1 flex flex-col justify-center my-1.5 min-h-0">
+    <div class="flex items-center justify-between px-1 mb-1 text-xs text-slate-400 shrink-0">
+      <div class="font-bold flex items-center gap-1.5 text-slate-300">
+        <span id="progressIndex">진행: 0 / 0</span>
+      </div>
+      <div class="flex items-center gap-1.5">
+        <span id="cardDayTag" class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-800 text-slate-300 border border-slate-700">Day -</span>
+        <span id="cardRoundTag" class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/10 text-amber-300 border border-amber-500/30">1회차 대상</span>
+      </div>
+    </div>
+
+    <!-- 카드 (터치 시 흔들림 없이 즉시 노출) -->
+    <div id="wordCard" onclick="toggleCardAnswer()" class="flex-1 max-h-[300px] bg-slate-900 border border-slate-800 rounded-2xl p-3 flex flex-col justify-between items-center text-center shadow-lg relative cursor-pointer overflow-hidden">
+      
+      <!-- 상단 라벨 -->
+      <div class="w-full flex items-center justify-between text-[11px] text-slate-500 shrink-0">
+        <span class="flex items-center gap-1"><i class="fa-regular fa-circle-question text-rose-400"></i>단어 암기</span>
+        <span id="cardTouchHint" class="text-slate-400">터치하여 발음 · 뜻 확인</span>
+      </div>
+
+      <!-- 단어 및 정답 영역 -->
+      <div class="my-auto w-full flex flex-col items-center justify-center py-0.5">
+        
+        <!-- [1] 상단 요미가나 발음 -->
+        <div id="wordReading" class="text-emerald-400 font-semibold text-sm tracking-wide mb-0.5 hidden">
+          ---
+        </div>
+
+        <!-- [2] 메인 일본어 단어 -->
+        <div id="wordMain" class="text-3xl sm:text-4xl font-black text-white tracking-wider my-0.5 font-serif">
+          단어 없음
+        </div>
+
+        <!-- [3] 한국어 뜻 -->
+        <div id="wordMeaning" class="text-sm sm:text-base font-bold text-slate-100 my-1 hidden">
+          ---
+        </div>
+
+        <!-- [4] 한국식 한자 훈음독 & 신자체 -->
+        <div id="hanjaBreakdown" class="flex flex-wrap items-center justify-center gap-1 mb-1.5 hidden"></div>
+
+        <!-- [5] 예문 (터치 시 후리가나 토글) -->
+        <div id="sentenceSection" onclick="event.stopPropagation(); toggleSentenceFurigana();" class="w-full pt-1.5 border-t border-slate-800/80 text-center hidden">
+          <p id="sentenceJa" class="text-xs text-slate-300 font-medium leading-relaxed"></p>
+          <p id="sentenceKo" class="text-[11px] text-slate-400 mt-0.5"></p>
+          <div class="text-[9px] text-slate-600 mt-0.5">
+            <i class="fa-solid fa-hand-pointer mr-0.5"></i>예문 터치 시 발음 켜기/끄기
+          </div>
+        </div>
+
+      </div>
+
+      <!-- 하단 발음 스피커 -->
+      <div class="w-full flex items-center justify-between text-slate-500 text-xs shrink-0 pt-0.5">
+        <button onclick="event.stopPropagation(); playCurrentWordAudio();" class="p-1.5 -ml-1 text-slate-400 hover:text-emerald-400 active:scale-95" title="음성 재생">
+          <i class="fa-solid fa-volume-high text-sm"></i>
+        </button>
+        <span class="text-[10px] text-slate-400">터치 시 정답 열림/닫힘</span>
+      </div>
+
+    </div>
+  </main>
+
+  <!-- ================= BOTTOM: 액션 버튼 (위로 올림, 스크롤 완전 방지) ================= -->
+  <footer class="grid grid-cols-2 gap-2.5 shrink-0 pt-1 pb-6">
+    <button onclick="handleAnswer(false)" class="h-12 rounded-xl bg-rose-950/80 border border-rose-600/50 hover:bg-rose-900 active:bg-rose-800 text-rose-200 font-black text-sm flex items-center justify-center gap-1.5 shadow-md">
+      <i class="fa-solid fa-xmark text-base"></i>
+      <span>모름 (다음 회차)</span>
+    </button>
+
+    <button onclick="handleAnswer(true)" class="h-12 rounded-xl bg-emerald-950/80 border border-emerald-600/50 hover:bg-emerald-900 active:bg-emerald-800 text-emerald-200 font-black text-sm flex items-center justify-center gap-1.5 shadow-md">
+      <i class="fa-solid fa-check text-base"></i>
+      <span>외움 (회독 통과)</span>
+    </button>
+  </footer>
+
+
+  <!-- ================= MODAL: 단어 관리 (등록 단어 보기 / 새 단어 추가) ================= -->
+  <div id="manageModal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm hidden flex items-center justify-center p-3">
+    <div class="bg-slate-900 border border-slate-700 w-full max-w-md rounded-2xl p-4 flex flex-col max-h-[88vh] shadow-2xl">
+      
+      <!-- 상단 헤더 & 탭 -->
+      <div class="flex items-center justify-between pb-2 border-b border-slate-800 shrink-0">
+        <div class="flex items-center gap-2">
+          <button onclick="switchManageTab('list')" id="tabBtnList" class="font-bold text-xs px-2.5 py-1 rounded-lg bg-rose-600 text-white">등록 단어 보기 (<span id="totalWordCountLabel">0</span>)</button>
+          <button onclick="switchManageTab('add')" id="tabBtnAdd" class="font-bold text-xs px-2.5 py-1 rounded-lg bg-slate-800 text-slate-400">단어 추가</button>
+        </div>
+        <button onclick="closeModal('manageModal')" class="text-slate-400 hover:text-white p-1">
+          <i class="fa-solid fa-xmark text-lg"></i>
+        </button>
+      </div>
+
+      <!-- [TAB 1] 등록된 단어 전수 리스트 뷰어 & 검색 -->
+      <div id="manageTabList" class="flex-1 flex flex-col overflow-hidden py-2">
+        <div class="relative mb-2 shrink-0">
+          <input type="text" id="wordSearchInput" oninput="filterWordList()" placeholder="한자, 발음, 한국어 뜻으로 검색..." class="w-full bg-slate-950 border border-slate-800 rounded-lg py-1.5 pl-8 pr-2 text-xs text-slate-200 focus:outline-none focus:border-rose-500" />
+          <i class="fa-solid fa-magnifying-glass absolute left-2.5 top-2.5 text-slate-500 text-xs"></i>
+        </div>
+        <div id="wordListContainer" class="flex-1 overflow-y-auto space-y-1.5 pr-1 text-xs">
+          <!-- 동적 렌더링 -->
+        </div>
+      </div>
+
+      <!-- [TAB 2] 사진/텍스트 단어 추가 폼 -->
+      <div id="manageTabAdd" class="flex-1 flex flex-col overflow-y-auto py-2 gap-3 text-xs hidden">
+        <div class="bg-slate-950 p-2.5 rounded-xl border border-slate-800">
+          <label class="block font-semibold text-slate-300 mb-1">등록할 대상 Day 지정</label>
+          <div class="flex items-center gap-2">
+            <span class="text-slate-400">Day</span>
+            <input type="number" id="regStartDay" value="3" min="1" max="45" class="w-16 bg-slate-900 border border-slate-700 rounded p-1 text-center font-bold text-amber-400" />
+            <span class="text-slate-400">~ Day</span>
+            <input type="number" id="regEndDay" value="5" min="1" max="45" class="w-16 bg-slate-900 border border-slate-700 rounded p-1 text-center font-bold text-amber-400" />
+          </div>
+          <p class="text-[10px] text-slate-500 mt-1">기존 Day 단어는 유지되며 새로 추가한 Day가 누적 등록됩니다.</p>
+        </div>
+
+        <div class="bg-slate-950 p-3 rounded-xl border border-dashed border-slate-700 text-center">
+          <i class="fa-regular fa-images text-2xl text-slate-500 mb-1 block"></i>
+          <span class="font-bold text-slate-300">스마트폰 앨범에서 책 사진 다중 선택</span>
+          <p class="text-[10px] text-slate-400 mt-0.5 mb-2">카메라로 미리 찍어둔 페이지를 한 번에 최대 30장까지 선택</p>
+          
+          <label class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gradient-to-r from-rose-600 to-amber-600 text-white font-bold cursor-pointer active:scale-95 shadow">
+            <i class="fa-solid fa-file-arrow-up"></i>
+            <span>앨범에서 사진 선택 (최대 30장)</span>
+            <input type="file" id="imageBatchInput" accept="image/*" multiple onchange="handleImageBatchSelect(this)" class="hidden" />
+          </label>
+          <div id="imageSelectStatus" class="text-[10px] text-amber-400 mt-1.5 font-medium hidden">0장 선택됨</div>
+        </div>
+
+        <div>
+          <div class="flex items-center justify-between mb-1">
+            <span class="font-semibold text-slate-300">단어 텍스트 목록</span>
+            <button onclick="autoFillExamples()" class="text-[11px] text-rose-400 font-bold hover:underline">
+              <i class="fa-solid fa-wand-magic-sparkles"></i> 예문 없는 단어 자동생성
+            </button>
+          </div>
+          <textarea id="bulkTextInput" rows="4" placeholder="Day / 한자단어 / 요미가나 / 한국어뜻 / 예문" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2 font-mono text-xs text-slate-200 focus:outline-none focus:border-rose-500"></textarea>
+        </div>
+
+        <button onclick="saveBulkWords()" class="w-full py-2 rounded-xl bg-rose-600 hover:bg-rose-500 font-bold text-white text-xs shrink-0">
+          단어장에 추가 저장하기
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ================= MODAL: Day 직접 입력 ================= -->
+  <div id="customDayModal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm hidden flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-700 w-full max-w-xs rounded-2xl p-4 shadow-xl">
+      <h4 class="font-bold text-sm text-white mb-2">학습할 Day 범위 직접 지정</h4>
+      <div class="flex items-center gap-2 mb-3">
+        <input type="number" id="customStartDay" value="1" min="1" max="45" class="w-full bg-slate-950 border border-slate-700 rounded p-1.5 text-center font-bold text-rose-400" />
+        <span class="text-slate-400">~</span>
+        <input type="number" id="customEndDay" value="10" min="1" max="45" class="w-full bg-slate-950 border border-slate-700 rounded p-1.5 text-center font-bold text-rose-400" />
+      </div>
+      <div class="flex gap-2">
+        <button onclick="closeModal('customDayModal')" class="flex-1 py-1.5 rounded-lg bg-slate-800 text-slate-300 text-xs">취소</button>
+        <button onclick="applyCustomDays()" class="flex-1 py-1.5 rounded-lg bg-rose-600 font-bold text-white text-xs">적용</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= MODAL: 홈 화면 설치 안내 ================= -->
+  <div id="pwaModal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm hidden flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-700 w-full max-w-sm rounded-2xl p-4 shadow-xl text-xs">
+      <div class="flex justify-between items-center mb-2">
+        <h4 class="font-bold text-sm text-white">스마트폰 앱(바탕화면) 설치</h4>
+        <button onclick="closeModal('pwaModal')" class="text-slate-400 p-1"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <p class="text-slate-300 leading-relaxed mb-2">브라우저 메뉴에서 바탕화면에 꺼내놓으시면 단독 어플처럼 실행됩니다:</p>
+      <div class="bg-slate-950 p-2.5 rounded-xl border border-slate-800 flex flex-col gap-1.5 text-slate-300">
+        <div><b>삼성인터넷 / 크롬</b>: 우측 상단 메뉴(⋮) ➔ <b>[홈 화면에 추가]</b></div>
+        <div><b>아이폰 사파리</b>: 하단 공유 아이콘 ➔ <b>[홈 화면에 추가]</b></div>
+      </div>
+      <button onclick="closeModal('pwaModal')" class="w-full mt-3 py-2 bg-slate-800 rounded-lg text-slate-200 font-bold">확인</button>
+    </div>
+  </div>
+
+
+  <!-- ================= JAVASCRIPT: 데이터 및 5회독 체인 로직 ================= -->
+  <script>
+    /* 기본 151단어 (Day 01 75개 + Day 02 76개 전수 내장) */
+    const DEFAULT_151_WORDS = [
+      { day: 1, word: "一", reading: "いち", meaning: "1, 일", sentenceJa: "一つ(ひとつ)ください。", sentenceKo: "하나 주세요." },
+      { day: 1, word: "二", reading: "に", meaning: "2, 이", sentenceJa: "二人(ふたり)で行く(いく)。", sentenceKo: "둘이서 가다." },
+      { day: 1, word: "三", reading: "さん", meaning: "3, 삼", sentenceJa: "三月(さんがつ)に卒業(そつぎょう)する。", sentenceKo: "3월에 졸업하다." },
+      { day: 1, word: "四", reading: "し/よん", meaning: "4, 사", sentenceJa: "四人(よにん)の家族(かぞく)。", sentenceKo: "4명의 가족." },
+      { day: 1, word: "五", reading: "ご", meaning: "5, 오", sentenceJa: "五時(ごじ)に起きる(おきる)。", sentenceKo: "5시에 일어나다." },
+      { day: 1, word: "六", reading: "ろく", meaning: "6, 육", sentenceJa: "六本木(ろっぽんぎ)に行く(いく)。", sentenceKo: "롯폰기에 가다." },
+      { day: 1, word: "七", reading: "しち/なな", meaning: "7, 칠", sentenceJa: "七時(しちじ)の電車(でんしゃ)。", sentenceKo: "7시 전철." },
+      { day: 1, word: "八", reading: "はち", meaning: "8, 팔", sentenceJa: "八月(はちがつ)は暑い(あつい)。", sentenceKo: "8월은 덥다." },
+      { day: 1, word: "九", reading: "きゅう/く", meaning: "9, 구", sentenceJa: "九月(くがつ)から始まる(はじまる)。", sentenceKo: "9월부터 시작하다." },
+      { day: 1, word: "十", reading: "じゅう", meaning: "10, 십", sentenceJa: "十年(じゅうねん)が過ぎた(すぎた)。", sentenceKo: "10년이 지났다." },
+      { day: 1, word: "百", reading: "ひゃく", meaning: "100, 백", sentenceJa: "百円(ひゃくえん)のペン。", sentenceKo: "100엔짜리 펜." },
+      { day: 1, word: "千", reading: "せん", meaning: "1000, 천", sentenceJa: "千円(せんえん)札(さつ)。", sentenceKo: "천엔 지폐." },
+      { day: 1, word: "万", reading: "まん", meaning: "10000, 만", sentenceJa: "一万(いちまん)人(にん)の観客(かんきゃく)。", sentenceKo: "1만 명의 관객." },
+      { day: 1, word: "以上", reading: "いじょう", meaning: "이상", sentenceJa: "これ以上(いじょう)は無理(むり)だ。", sentenceKo: "이 이상은 무리다." },
+      { day: 1, word: "以下", reading: "いか", meaning: "이하", sentenceJa: "中学生(ちゅうがくせい)以下(いか)は無料(むりょう)。", sentenceKo: "중학생 이하는 무료." },
+      { day: 1, word: "数", reading: "かず", meaning: "수, 숫자", sentenceJa: "数(かず)を数える(かぞえる)。", sentenceKo: "수를 세다." },
+      { day: 1, word: "数える", reading: "かぞえる", meaning: "세다", sentenceJa: "お金(かね)を数える(かぞえる)。", sentenceKo: "돈을 세다." },
+      { day: 1, word: "割る", reading: "わる", meaning: "나누다, 깨뜨리다", sentenceJa: "コップを割る(わる)。", sentenceKo: "컵을 깨뜨리다." },
+      { day: 1, word: "足す", reading: "たす", meaning: "더하다, 보태다", sentenceJa: "水(みず)を少し(すこし)足す(たす)。", sentenceKo: "물을 조금 더하다." },
+      { day: 1, word: "朝", reading: "あさ", meaning: "아침", sentenceJa: "朝(あさ)ごはんを食べる(たべる)。", sentenceKo: "아침밥을 먹다." },
+      { day: 1, word: "昼", reading: "ひる", meaning: "낮", sentenceJa: "昼(ひる)休みに休む。", sentenceKo: "점심시간에 쉬다." },
+      { day: 1, word: "昼間", reading: "ひるま", meaning: "주간, 낮 동안", sentenceJa: "昼間(ひるま)は暖かい(あたたかい)。", sentenceKo: "낮 동안은 따뜻하다." },
+      { day: 1, word: "夕方", reading: "ゆうがた", meaning: "저녁 무렵", sentenceJa: "夕方(ゆうがた)に雨(あめ)が降る(ふる)。", sentenceKo: "저녁 무렵에 비가 내리다." },
+      { day: 1, word: "夕べ", reading: "ゆうべ", meaning: "저녁때", sentenceJa: "夕べ(ゆうべ)電話(でんわ)した。", sentenceKo: "어젯밤(저녁때) 전화했다." },
+      { day: 1, word: "晩", reading: "ばん", meaning: "밤, 해 질 녘", sentenceJa: "毎晩(まいばん)本(ほん)を読む(よむ)。", sentenceKo: "매일 밤 책을 읽는다." },
+      { day: 1, word: "夜", reading: "よる", meaning: "밤", sentenceJa: "夜(よる)遅く(おそく)寝る(ねる)。", sentenceKo: "밤늦게 자다." },
+      { day: 1, word: "夜中", reading: "よなか", meaning: "한밤중", sentenceJa: "夜中(よなか)に目が覚める(さめる)。", sentenceKo: "한밤중에 눈이 떠지다." },
+      { day: 1, word: "深夜", reading: "しんや", meaning: "심야", sentenceJa: "深夜(しんや)番組(ばんぐみ)を見る(みる)。", sentenceKo: "심야 방송을 보다." },
+      { day: 1, word: "今朝", reading: "けさ", meaning: "오늘 아침", sentenceJa: "今朝(けさ)は早く(はやく)起きた(おきた)。", sentenceKo: "오늘 아침에는 일찍 일어났다." },
+      { day: 1, word: "今夜", reading: "こんや", meaning: "오늘 밤", sentenceJa: "今夜(こんや)パーティーがある。", sentenceKo: "오늘 밤 파티가 있다." },
+      { day: 1, word: "毎朝", reading: "まいあさ", meaning: "매일 아침", sentenceJa: "毎朝(まいあさ)ジョギングをする。", sentenceKo: "매일 아침 조깅을 한다." },
+      { day: 1, word: "毎晩", reading: "まいばん", meaning: "매일 밤", sentenceJa: "毎晩(まいばん)日記(にっき)を書く(かく)。", sentenceKo: "매일 밤 일기를 쓴다." },
+      { day: 1, word: "午前", reading: "ごぜん", meaning: "오전", sentenceJa: "午前(ごぜん)九時(くじ)に始まる(はじまる)。", sentenceKo: "오전 9시에 시작하다." },
+      { day: 1, word: "午後", reading: "ごご", meaning: "오후", sentenceJa: "午後(ごご)から会議(かいぎ)がある。", sentenceKo: "오후부터 회의가 있다." },
+      { day: 1, word: "昔", reading: "むかし", meaning: "예전, 옛날", sentenceJa: "昔(むかし)の友達(ともだち)に会う(あう)。", sentenceKo: "옛 친구를 만나다." },
+      { day: 1, word: "今", reading: "いま", meaning: "지금", sentenceJa: "今(いま)何時(なんじ)ですか。", sentenceKo: "지금 몇 시입니까?" },
+      { day: 1, word: "後", reading: "あと", meaning: "후, 뒤, 나중", sentenceJa: "食事(しょくじ)の後(あと)で薬(くすり)を飲む(のむ)。", sentenceKo: "식사 후에 약을 먹다." },
+      { day: 1, word: "もう", reading: "もう", meaning: "벌써, 이미", sentenceJa: "もう帰る(かえる)時間(じかん)だ。", sentenceKo: "벌써 돌아갈 시간이다." },
+      { day: 1, word: "最後", reading: "さいご", meaning: "최후, 마지막", sentenceJa: "最後(さいご)まで諦めない(あきらめない)。", sentenceKo: "마지막까지 포기하지 않는다." },
+      { day: 1, word: "遅い", reading: "おそい", meaning: "늦다, 느리다", sentenceJa: "足(あし)が遅い(おそい)。", sentenceKo: "걸음이 느리다." },
+      { day: 1, word: "一日中", reading: "いちにちじゅう", meaning: "하루 종일", sentenceJa: "一日中(いちにちじゅう)雨(あめ)だった。", sentenceKo: "하루 종일 비가 왔다." },
+      { day: 1, word: "以内", reading: "いない", meaning: "이내", sentenceJa: "一週間(いっしゅうかん)以内(いない)に出す(だす)。", sentenceKo: "일주일 이내에 제출하다." },
+      { day: 1, word: "時間", reading: "じかん", meaning: "시간", sentenceJa: "時間(じかん)が足りない(たりない)。", sentenceKo: "시간이 부족하다." },
+      { day: 1, word: "時", reading: "とき", meaning: "때", sentenceJa: "子供(こども)の時(とき)の夢(ゆめ)。", sentenceKo: "어릴 때의 꿈." },
+      { day: 1, word: "おととい", reading: "おととい", meaning: "그저께", sentenceJa: "おととい日本(にほん)に着いた(ついた)。", sentenceKo: "그저께 일본에 도착했다." },
+      { day: 1, word: "二日前", reading: "ふつかまえ", meaning: "2일 전", sentenceJa: "二日前(ふつかまえ)に連絡(れんらく)した。", sentenceKo: "이틀 전에 연락했다." },
+      { day: 1, word: "昨日", reading: "きのう", meaning: "어제", sentenceJa: "昨日(きのう)映画(えいが)を見た(みた)。", sentenceKo: "어제 영화를 보았다." },
+      { day: 1, word: "今日", reading: "きょう", meaning: "오늘", sentenceJa: "今日(きょう)はいい天気(てんき)だ。", sentenceKo: "오늘은 좋은 날씨다." },
+      { day: 1, word: "明日", reading: "あした", meaning: "내일", sentenceJa: "明日(あした)また会いましょう(あいましょう)。", sentenceKo: "내일 또 만납시다." },
+      { day: 1, word: "あさって", reading: "あさって", meaning: "모레", sentenceJa: "あさって試験(しけん)がある。", sentenceKo: "모레 시험이 있다." },
+      { day: 1, word: "先日", reading: "せんじつ", meaning: "얼마 전, 며칠 전", sentenceJa: "先日(せんじつ)はどうも。", sentenceKo: "얼마 전에는 감사했습니다." },
+      { day: 1, word: "先月", reading: "せんげつ", meaning: "지난달", sentenceJa: "先月(せんげつ)引っ越した(ひっこした)。", sentenceKo: "지난달 이사했다." },
+      { day: 1, word: "先週", reading: "せんしゅう", meaning: "지난주", sentenceJa: "先週(せんしゅう)の旅行(りょこう)。", sentenceKo: "지난주 여행." },
+      { day: 1, word: "今月", reading: "こんげつ", meaning: "이번 달", sentenceJa: "今月(こんげつ)の目標(もくひょう)。", sentenceKo: "이번 달의 목표." },
+      { day: 1, word: "今週", reading: "こんしゅう", meaning: "이번 주", sentenceJa: "今週(こんしゅう)は忙しい(いそがしい)。", sentenceKo: "이번 주는 바쁘다." },
+      { day: 1, word: "来月", reading: "らいげつ", meaning: "다음 달", sentenceJa: "来月(らいげつ)日本(にほん)に行く(いく)。", sentenceKo: "다음 달 일본에 가다." },
+      { day: 1, word: "来週", reading: "らいしゅう", meaning: "다음 주", sentenceJa: "来週(らいしゅう)また会いましょう(あいましょう)。", sentenceKo: "다음 주에 또 만나요." },
+      { day: 1, word: "おととし", reading: "おととし", meaning: "재작년", sentenceJa: "おととし卒業(そつぎょう)した。", sentenceKo: "재작년에 졸업했다." },
+      { day: 1, word: "二年前", reading: "にねんまえ", meaning: "2년 전", sentenceJa: "二年前(にねんまえ)から習っている(ならっている)。", sentenceKo: "2년 전부터 배우고 있다." },
+      { day: 1, word: "去年", reading: "きょねん", meaning: "작년, 지난해", sentenceJa: "去年(きょねん)結婚(けっこん)した。", sentenceKo: "작년에 결혼했다." },
+      { day: 1, word: "今年", reading: "ことし", meaning: "올해", sentenceJa: "今年(ことし)もよろしく。", sentenceKo: "올해도 잘 부탁드립니다." },
+      { day: 1, word: "来年", reading: "らいねん", meaning: "내년", sentenceJa: "来年(らいねん)留学(りゅう gak)する。", sentenceKo: "내년에 유학한다." },
+      { day: 1, word: "再来年", reading: "さらいねん", meaning: "후년, 다음 다음 해", sentenceJa: "再来年(さらいねん)に帰国(きこく)する。", sentenceKo: "내후년에 귀국한다." },
+      { day: 1, word: "毎日", reading: "まいにち", meaning: "매일", sentenceJa: "毎日(まいにち)日本語(にほんご)を勉強(べんきょう)する。", sentenceKo: "매일 일본어를 공부한다." },
+      { day: 1, word: "毎月", reading: "まいつき/まいげつ", meaning: "매월", sentenceJa: "毎月(まいつき)貯金(ちょきん)をする。", sentenceKo: "매달 저금을 한다." },
+      { day: 1, word: "毎年", reading: "まいとし/まいねん", meaning: "매년, 매해", sentenceJa: "毎年(まいとし)旅行(りょこう)に行く(いく)。", sentenceKo: "매년 여행을 간다." },
+      { day: 1, word: "半年", reading: "はんとし", meaning: "반년", sentenceJa: "半年(はんとし)日本(にほん)にいた。", sentenceKo: "반년 동안 일본에 있었다." },
+      { day: 1, word: "眠い", reading: "ねむい", meaning: "졸리다", sentenceJa: "ご飯(はん)を食べて(たべて)眠い(ねむい)。", sentenceKo: "밥을 먹어서 졸리다." },
+      { day: 1, word: "眠たい", reading: "ねむたい", meaning: "졸리다(眠い보다 생생한 느낌)", sentenceJa: "とても眠たい(ねむたい)。", sentenceKo: "너무 졸리다." },
+      { day: 1, word: "眠る", reading: "ねむる", meaning: "자다, 잠들다", sentenceJa: "ぐっすり眠る(ねむる)。", sentenceKo: "푹 잠들다." },
+      { day: 1, word: "寝る", reading: "ねる", meaning: "자다", sentenceJa: "早く(はやく)寝る(ねる)。", sentenceKo: "일찍 자다." },
+      { day: 1, word: "寝坊", reading: "ねぼう", meaning: "늦잠", sentenceJa: "朝(あさ)寝坊(ねぼう)してしまった。", sentenceKo: "아침에 늦잠을 자버렸다." },
+      { day: 1, word: "出る", reading: "でる", meaning: "나가다, 나오다", sentenceJa: "部屋(へや)を出る(でる)。", sentenceKo: "방을 나가다." },
+      { day: 1, word: "届ける", reading: "とどける", meaning: "보내다", sentenceJa: "荷物(にもつ)を届ける(とどける)。", sentenceKo: "짐을 배달하다(보내다)." },
+      { day: 1, word: "届く", reading: "とどく", meaning: "도착하다, 도달하다", sentenceJa: "手紙(てがみ)が届く(とどく)。", sentenceKo: "편지가 도착하다." },
+
+      { day: 2, word: "家族", reading: "かぞく", meaning: "가족", sentenceJa: "家族(かぞく)と暮らす(くらす)。", sentenceKo: "가족과 살다." },
+      { day: 2, word: "父", reading: "ちち", meaning: "(나의) 아빠, 아버지", sentenceJa: "父(ちち)は会社員(かいしゃいん)です。", sentenceKo: "우리 아버지는 회사원입니다." },
+      { day: 2, word: "お父さん", reading: "おとうさん", meaning: "아버지", sentenceJa: "お父さん(おとうさん)に電話(でんわ)する。", sentenceKo: "아버지께 전화하다." },
+      { day: 2, word: "父親", reading: "ちちおや", meaning: "부친", sentenceJa: "父親(ちちおや)の仕事(しごと)。", sentenceKo: "부친의 일." },
+      { day: 2, word: "母", reading: "はは", meaning: "(나의) 엄마, 어머니", sentenceJa: "母(はは)の手料理(てりょうり)。", sentenceKo: "어머니의 손맛." },
+      { day: 2, word: "お母さん", reading: "おかあさん", meaning: "어머니", sentenceJa: "お母さん(おかあさん)に似ている(にている)。", sentenceKo: "어머니를 닮았다." },
+      { day: 2, word: "母親", reading: "ははおや", meaning: "모친", sentenceJa: "母親(ははおや)の愛情(あいじょう)。", sentenceKo: "모친의 애정." },
+      { day: 2, word: "両親", reading: "りょうしん", meaning: "부모님", sentenceJa: "両親(りょうしん)に感謝(かんしゃ)する。", sentenceKo: "부모님께 감사하다." },
+      { day: 2, word: "兄", reading: "あに", meaning: "(나의) 형, 오빠", sentenceJa: "兄(あに)は大学生(だいがくせい)です。", sentenceKo: "우리 형은 대학생입니다." },
+      { day: 2, word: "お兄さん", reading: "おにいさん", meaning: "형, 오빠", sentenceJa: "優しい(やさしい)お兄さん(おにいさん)。", sentenceKo: "상냥한 형(오빠)." },
+      { day: 2, word: "姉", reading: "あね", meaning: "(나의) 누나, 언니", sentenceJa: "姉(あね)が二人(ふたり)いる。", sentenceKo: "누나가 두 명 있다." },
+      { day: 2, word: "お姉さん", reading: "おねえさん", meaning: "누나, 언니", sentenceJa: "綺麗(きれい)なお姉さん(おねえさん)。", sentenceKo: "예쁜 누나(언니)." },
+      { day: 2, word: "弟", reading: "おとうと", meaning: "(나의) 남동생", sentenceJa: "弟(おとうと)と遊ぶ(あそぶ)。", sentenceKo: "남동생과 놀다." },
+      { day: 2, word: "妹", reading: "いもうと", meaning: "(나의) 여동생", sentenceJa: "妹(いもうと)からのプレゼント。", sentenceKo: "여동생으로부터의 선물." },
+      { day: 2, word: "兄弟", reading: "きょうだい", meaning: "형제", sentenceJa: "兄弟(きょうだい)はいますか。", sentenceKo: "형제가 있습니까?" },
+      { day: 2, word: "祖父", reading: "そふ", meaning: "(나의) 할아버지", sentenceJa: "祖父(そふ)は元気(げんき)です。", sentenceKo: "할아버지는 건강하십니다." },
+      { day: 2, word: "おじいさん", reading: "おじいさん", meaning: "할아버지", sentenceJa: "親切(しんせつ)なおじいさん。", sentenceKo: "친절한 할아버지." },
+      { day: 2, word: "祖母", reading: "そぼ", meaning: "(나의) 할머니", sentenceJa: "祖母(そぼ)の家(いえ)に行く(いく)。", sentenceKo: "할머니 댁에 가다." },
+      { day: 2, word: "おばあさん", reading: "おばあさん", meaning: "할머니", sentenceJa: "優しい(やさしい)おばあさん。", sentenceKo: "다정한 할머니." },
+      { day: 2, word: "夫", reading: "おっと", meaning: "남편", sentenceJa: "夫(おっと)と出かける(でかける)。", sentenceKo: "남편과 외출하다." },
+      { day: 2, word: "主人", reading: "しゅじん", meaning: "남편, 주인", sentenceJa: "うちの主人(しゅじん)です。", sentenceKo: "저희 남편입니다." },
+      { day: 2, word: "妻", reading: "つま", meaning: "처, 아내", sentenceJa: "妻(つま)の手料理(てりょうり)。", sentenceKo: "아내의 요리." },
+      { day: 2, word: "奥さん", reading: "おくさん", meaning: "부인", sentenceJa: "課長(かちょう)の奥さん(おくさん)。", sentenceKo: "과장님의 사모님(부인)." },
+      { day: 2, word: "おば", reading: "おば", meaning: "이모, 고모", sentenceJa: "おばの家(いえ)に泊まる(とまる)。", sentenceKo: "이모 댁에서 묵다." },
+      { day: 2, word: "親戚", reading: "しんせき", meaning: "친척", sentenceJa: "親戚(しんせき)が集まる(あつまる)。", sentenceKo: "친척들이 모이다." },
+      { day: 2, word: "親類", reading: "しんるい", meaning: "친척(가족을 제외한 혈족의 총칭)", sentenceJa: "遠い(とおい)親類(しんるい)。", sentenceKo: "먼 친척." },
+      { day: 2, word: "自分", reading: "じぶん", meaning: "자기 자신", sentenceJa: "自分(じぶん)で決める(きめる)。", sentenceKo: "스스로 결정하다." },
+      { day: 2, word: "友達", reading: "ともだち", meaning: "친구, 벗", sentenceJa: "友達(ともだち)と映画(えいが)を見る(みる)。", sentenceKo: "친구와 영화를 보다." },
+      { day: 2, word: "友人", reading: "ゆうじん", meaning: "친구", sentenceJa: "古い(ふるい)友人(ゆうじん)に会う(あう)。", sentenceKo: "오래된 친구를 만나다." },
+      { day: 2, word: "先輩", reading: "せんぱい", meaning: "선배", sentenceJa: "先輩(せんぱい)に相談(そうだん)する。", sentenceKo: "선배에게 상담하다." },
+      { day: 2, word: "秘密", reading: "ひみつ", meaning: "비밀", sentenceJa: "秘密(ひみつ)を守る(まもる)。", sentenceKo: "비밀을 지키다." },
+      { day: 2, word: "訪ねる", reading: "たずねる", meaning: "방문하다", sentenceJa: "先生(せんせい)の家(いえ)を訪ねる(たずねる)。", sentenceKo: "선생님 댁을 방문하다." },
+      { day: 2, word: "借りる", reading: "かりる", meaning: "빌리다", sentenceJa: "本(ほん)を借りる(かりる)。", sentenceKo: "책을 빌리다." },
+      { day: 2, word: "近い", reading: "ちかい", meaning: "가깝다", sentenceJa: "駅(えき)から近い(ちかい)。", sentenceKo: "역에서 가깝다." },
+      { day: 2, word: "会う", reading: "あう", meaning: "만나다", sentenceJa: "友達(ともだち)に会う(あう)。", sentenceKo: "친구를 만나다." },
+      { day: 2, word: "間", reading: "あいだ", meaning: "사이, 간격", sentenceJa: "ドアの間(あいだ)に挟まる(はさまる)。", sentenceKo: "문 사이에 끼이다." },
+      { day: 2, word: "貸す", reading: "かす", meaning: "빌려주다", sentenceJa: "お金(かね)を貸す(かす)。", sentenceKo: "돈을 빌려주다." },
+      { day: 2, word: "けんか", reading: "けんか", meaning: "다툼, 싸움", sentenceJa: "兄弟(きょうだい)でけんかする。", sentenceKo: "형제끼리 싸우다." },
+      { day: 2, word: "彼女", reading: "かのじょ", meaning: "그녀", sentenceJa: "彼女(かのじょ)は先生(せんせい)です。", sentenceKo: "그녀는 선생님입니다." },
+      { day: 2, word: "遊ぶ", reading: "あそぶ", meaning: "놀다", sentenceJa: "公園(こうえん)で遊ぶ(あそぶ)。", sentenceKo: "공원에서 놀다." },
+      { day: 2, word: "関係", reading: "かんけい", meaning: "관계", sentenceJa: "良い(よい)関係(かんけい)を築く(きずく)。", sentenceKo: "좋은 관계를 맺다." },
+      { day: 2, word: "一緒に", reading: "いっしょに", meaning: "함께, 같이", sentenceJa: "一緒(いっしょ)に行きましょう(いきましょう)。", sentenceKo: "함께 갑시다." },
+      { day: 2, word: "お世話になる", reading: "おせわになる", meaning: "신세를 지다", sentenceJa: "大変(たいへん)お世話(せわ)になりました。", sentenceKo: "대단히 신세를 졌습니다." },
+      { day: 2, word: "朝ご飯", reading: "あさごはん", meaning: "아침밥", sentenceJa: "毎朝(まいあさ)朝ご飯(あさごはん)を食べる(たべる)。", sentenceKo: "매일 아침 아침밥을 먹다." },
+      { day: 2, word: "夕飯", reading: "ゆうはん", meaning: "저녁밥", sentenceJa: "夕飯(ゆうはん)の支度(したく)をする。", sentenceKo: "저녁밥을 준비하다." },
+      { day: 2, word: "閉じる", reading: "とじる", meaning: "(눈을) 감다, 닫히다", sentenceJa: "目(め)を閉じる(とじる)。", sentenceKo: "눈을 감다." },
+      { day: 2, word: "ぬる", reading: "ぬる", meaning: "바르다", sentenceJa: "薬(くすり)を塗る(ぬる)。", sentenceKo: "약을 바르다." },
+      { day: 2, word: "浴びる", reading: "あびる", meaning: "(물을) 뒤집어쓰다, 샤워하다", sentenceJa: "シャワーを浴びる(あびる)。", sentenceKo: "샤워를 하다." },
+      { day: 2, word: "はく", reading: "はく", meaning: "(바지, 치마 등을) 입다", sentenceJa: "ズボンを穿く(はく)。", sentenceKo: "바지를 입다." },
+      { day: 2, word: "かぶる", reading: "かぶる", meaning: "(모자를) 쓰다, 뒤집어쓰다", sentenceJa: "帽子(ぼうし)を被る(かぶる)。", sentenceKo: "모자를 쓰다." },
+      { day: 2, word: "脱ぐ", reading: "ぬぐ", meaning: "벗다", sentenceJa: "靴(くつ)を脱ぐ(ぬぐ)。", sentenceKo: "신발을 벗다." },
+      { day: 2, word: "付ける", reading: "つける", meaning: "붙이다, (전등을) 켜다", sentenceJa: "電気(でんき)を付ける(つける)。", sentenceKo: "전등을 켜다." },
+      { day: 2, word: "なる", reading: "なる", meaning: "(벨 등이) 울리다", sentenceJa: "ベルが鳴る(なる)。", sentenceKo: "벨이 울리다." },
+      { day: 2, word: "生活", reading: "せいかつ", meaning: "생활", sentenceJa: "日本(にほん)での生活(せいかつ)。", sentenceKo: "일본에서의 생활." },
+      { day: 2, word: "付く", reading: "つく", meaning: "붙다, (기계 등이) 켜지다", sentenceJa: "火(ひ)が付く(つく)。", sentenceKo: "불이 붙다." },
+      { day: 2, word: "引く", reading: "ひく", meaning: "끌다, 빼다, (선을) 긋다", sentenceJa: "ドアを引く(ひく)。", sentenceKo: "문을 당기다." },
+      { day: 2, word: "拾う", reading: "ひろう", meaning: "줍다", sentenceJa: "ゴミを拾う(ひろう)。", sentenceKo: "쓰레기를 줍다." },
+      { day: 2, word: "下げる", reading: "さげる", meaning: "내리다", sentenceJa: "頭(あたま)を下げる(さげる)。", sentenceKo: "고개를 숙이다(내리다)." },
+      { day: 2, word: "並べる", reading: "ならべる", meaning: "늘어놓다", sentenceJa: "本(ほん)を並べる(ならべる)。", sentenceKo: "책을 늘어놓다." },
+      { day: 2, word: "持つ", reading: "もつ", meaning: "들다, 가지다, 지니다", sentenceJa: "かばんを持つ(もつ)。", sentenceKo: "가방을 들다." },
+      { day: 2, word: "取る", reading: "とる", meaning: "집다, 들다, 잡다", sentenceJa: "手(て)に取る(とる)。", sentenceKo: "손에 집어 들다." },
+      { day: 2, word: "しまう", reading: "しまう", meaning: "안에 넣다, 끝내다", sentenceJa: "財布(さいふ)をしまう。", sentenceKo: "지갑을 집어넣다." },
+      { day: 2, word: "入れる", reading: "いれる", meaning: "넣다", sentenceJa: "カバンに入れる(いれる)。", sentenceKo: "가방에 넣다." },
+      { day: 2, word: "送る", reading: "おくる", meaning: "보내다", sentenceJa: "手紙(てがみ)を送る(おくる)。", sentenceKo: "편지를 보내다." },
+      { day: 2, word: "招待", reading: "しょうたい", meaning: "초대", sentenceJa: "パーティーに招待(しょうたい)する。", sentenceKo: "파티에 초대하다." },
+      { day: 2, word: "手伝う", reading: "てつだう", meaning: "돕다", sentenceJa: "母(はは)を手伝う(てつだう)。", sentenceKo: "어머니를 돕다." },
+      { day: 2, word: "となり", reading: "となり", meaning: "옆, 이웃", sentenceJa: "隣(となり)の部屋(へや)。", sentenceKo: "옆방." },
+      { day: 2, word: "返す", reading: "かえす", meaning: "돌려주다", sentenceJa: "本(ほん)を返す(かえす)。", sentenceKo: "책을 돌려주다." },
+      { day: 2, word: "経験", reading: "けいけん", meaning: "경험", sentenceJa: "いい経験(けいけん)になる。", sentenceKo: "좋은 경험이 되다." },
+      { day: 2, word: "半分", reading: "はんぶん", meaning: "반, 절반, 반절", sentenceJa: "半分(はんぶん)に分ける(わける)。", sentenceKo: "절반으로 나누다." },
+      { day: 2, word: "ある", reading: "ある", meaning: "(사물, 식물이) 있다", sentenceJa: "机(つくえ)の上(うえ)にある。", sentenceKo: "책상 위에 있다." },
+      { day: 2, word: "いる", reading: "いる", meaning: "(사람, 동물이) 있다", sentenceJa: "教室(きょうしつ)にいる。", sentenceKo: "교실에 있다." },
+      { day: 2, word: "八百屋", reading: "やおや", meaning: "채소가게", sentenceJa: "八百屋(やおや)で野菜(やさい)を買う(かう)。", sentenceKo: "채소가게에서 야채를 사다." },
+      { day: 2, word: "聞こえる", reading: "きこえる", meaning: "들리다", sentenceJa: "声(こえ)が聞こえる(きこえる)。", sentenceKo: "목소리가 들리다." },
+      { day: 2, word: "すっかり", reading: "すっかり", meaning: "모두, 온통, 완전히", sentenceJa: "すっかり忘れ(わすれ)ていた。", sentenceKo: "완전히 잊고 있었다." },
+      { day: 2, word: "できるだけ", reading: "できるだけ", meaning: "가능한 한", sentenceJa: "できるだけ早く(はやく)来てください。", sentenceKo: "가능한 한 빨리 와주세요." }
+    ];
+
+    /* 한국식 한자 훈음 & 신자체 사전 */
+    const KOREAN_HANJA_DICT = {
+      '一': { sound: '한 일', isShin: false },
+      '二': { sound: '두 이', isShin: false },
+      '三': { sound: '석 삼', isShin: false },
+      '四': { sound: '넉 사', isShin: false },
+      '五': { sound: '다섯 오', isShin: false },
+      '六': { sound: '여섯 육', isShin: false },
+      '七': { sound: '일곱 칠', isShin: false },
+      '八': { sound: '여덟 팔', isShin: false },
+      '九': { sound: '아홉 구', isShin: false },
+      '十': { sound: '열 십', isShin: false },
+      '百': { sound: '일백 백', isShin: false },
+      '千': { sound: '일천 천', isShin: false },
+      '万': { sound: '일만 만', isShin: true, origin: '萬' },
+      '以': { sound: '써 이', isShin: false },
+      '上': { sound: '위 상', isShin: false },
+      '下': { sound: '아래 하', isShin: false },
+      '数': { sound: '셈 수', isShin: true, origin: '數' },
+      '割': { sound: '베일 할', isShin: false },
+      '足': { sound: '발 족', isShin: false },
+      '朝': { sound: '아침 조', isShin: false },
+      '昼': { sound: '낮 주', isShin: true, origin: '晝' },
+      '間': { sound: '사이 간', isShin: false },
+      '夕': { sound: '저녁 석', isShin: false },
+      '方': { sound: '모 방', isShin: false },
+      '晩': { sound: '늦을 만', isShin: true, origin: '晚' },
+      '夜': { sound: '밤 야', isShin: false },
+      '中': { sound: '가운데 중', isShin: false },
+      '深': { sound: '깊을 심', isShin: false },
+      '今': { sound: '이제 금', isShin: false },
+      '毎': { sound: '매양 매', isShin: true, origin: '每' },
+      '午': { sound: '낮 오', isShin: false },
+      '前': { sound: '앞 전', isShin: false },
+      '後': { sound: '뒤 후', isShin: false },
+      '昔': { sound: '옛 석', isShin: false },
+      '最': { sound: '가장 최', isShin: false },
+      '遅': { sound: '더딜 지', isShin: true, origin: '遲' },
+      '日': { sound: '날 일', isShin: false },
+      '内': { sound: '안 내', isShin: false },
+      '時': { sound: '때 시', isShin: false },
+      '昨': { sound: '어제 작', isShin: false },
+      '明': { sound: '밝을 명', isShin: false },
+      '先': { sound: '먼저 선', isShin: false },
+      '月': { sound: '달 월', isShin: false },
+      '週': { sound: '주일 주', isShin: false },
+      '来': { sound: '올 래', isShin: true, origin: '來' },
+      '去': { sound: '갈 거', isShin: false },
+      '年': { sound: '해 년', isShin: false },
+      '再': { sound: '두 번 재', isShin: false },
+      '半': { sound: '반 반', isShin: false },
+      '眠': { sound: '잘 면', isShin: false },
+      '寝': { sound: '잘 침', isShin: true, origin: '寢' },
+      '坊': { sound: '동네 방', isShin: false },
+      '出': { sound: '날 출', isShin: false },
+      '届': { sound: '이를 계', isShin: true, origin: '屆' },
+      '家': { sound: '집 가', isShin: false },
+      '族': { sound: '겨레 족', isShin: false },
+      '父': { sound: '아비 부', isShin: false },
+      '親': { sound: '친할 친', isShin: false },
+      '母': { sound: '어미 모', isShin: false },
+      '両': { sound: '두 량', isShin: true, origin: '兩' },
+      '兄': { sound: '형 형', isShin: false },
+      '姉': { sound: '손위누이 자', isShin: false },
+      '弟': { sound: '아우 제', isShin: false },
+      '妹': { sound: '손아래누이 매', isShin: false },
+      '祖': { sound: '할아비 조', isShin: false },
+      '夫': { sound: '지아비 부', isShin: false },
+      '主': { sound: '주인 주', isShin: false },
+      '人': { sound: '사람 인', isShin: false },
+      '妻': { sound: '아내 처', isShin: false },
+      '奥': { sound: '깊을 옥', isShin: true, origin: '奧' },
+      '戚': { sound: '친척 척', isShin: false },
+      '類': { sound: '무리 류', isShin: true, origin: '類' },
+      '自': { sound: '스스로 자', isShin: false },
+      '分': { sound: '나눌 분', isShin: false },
+      '友': { sound: '벗 우', isShin: false },
+      '達': { sound: '통달할 달', isShin: true, origin: '達' },
+      '輩': { sound: '무리 배', isShin: false },
+      '秘': { sound: '숨길 비', isShin: true, origin: '祕' },
+      '密': { sound: '빽빽할 밀', isShin: false },
+      '訪': { sound: '찾을 방', isShin: false },
+      '借': { sound: '빌릴 차', isShin: false },
+      '近': { sound: '가까울 근', isShin: false },
+      '会': { sound: '모일 회', isShin: true, origin: '會' },
+      '貸': { sound: '빌릴 대', isShin: false },
+      '彼': { sound: '저 피', isShin: false },
+      '女': { sound: '계집 녀', isShin: false },
+      '遊': { sound: '놀 유', isShin: false },
+      '関': { sound: '관계할 관', isShin: true, origin: '關' },
+      '係': { sound: '맬 계', isShin: false },
+      '緒': { sound: '실마리 서', isShin: false },
+      '世': { sound: '세상 세', isShin: false },
+      '話': { sound: '말씀 화', isShin: false },
+      '飯': { sound: '밥 반', isShin: false },
+      '閉': { sound: '닫을 폐', isShin: false },
+      '浴': { sound: '목욕할 욕', isShin: false },
+      '脱': { sound: '벗을 탈', isShin: true, origin: '脫' },
+      '付': { sound: '붙을 부', isShin: false },
+      '生': { sound: '날 생', isShin: false },
+      '活': { sound: '살 활', isShin: false },
+      '引': { sound: '끌 인', isShin: false },
+      '拾': { sound: '주울 습', isShin: false },
+      '並': { sound: '나란할 병', isShin: true, origin: '並' },
+      '持': { sound: '가질 지', isShin: false },
+      '取': { sound: '취할 취', isShin: false },
+      '入': { sound: '들 입', isShin: false },
+      '送': { sound: '보낼 송', isShin: false },
+      '招': { sound: '부를 초', isShin: false },
+      '待': { sound: '기다릴 대', isShin: false },
+      '手': { sound: '손 수', isShin: false },
+      '伝': { sound: '전할 전', isShin: true, origin: '傳' },
+      '返': { sound: '돌이킬 반', isShin: false },
+      '経': { sound: '지날 경', isShin: true, origin: '經' },
+      '験': { sound: '시험할 험', isShin: true, origin: '驗' },
+      '屋': { sound: '집 옥', isShin: false },
+      '聞': { sound: '들을 문', isShin: false }
+    };
+
+    /* 상태 관리 */
+    let vocabularyList = [];
+    let selectedDayChunks = new Set(['1-15']);
+    let currentRound = 1;
+    let currentStudyList = [];
+    let currentIndex = 0;
+    let isCardAnswerRevealed = false;
+    let isTTSActive = true;
+    let showFuriganaInSentence = true;
+
+    /* 앱 시작 시 로드 */
+    window.addEventListener('DOMContentLoaded', () => {
+      // 1. 단어장 로드
+      const savedVocab = localStorage.getItem('kotoba_vocab_v4');
+      if (savedVocab) {
+        try { vocabularyList = JSON.parse(savedVocab); } catch(e) { vocabularyList = []; }
+      }
+      if (!vocabularyList || vocabularyList.length === 0) {
+        vocabularyList = DEFAULT_151_WORDS.map((item, idx) => ({
+          id: 'v_init_' + (idx + 1),
+          day: item.day,
+          word: item.word,
+          reading: item.reading,
+          meaning: item.meaning,
+          sentenceJa: item.sentenceJa,
+          sentenceKo: item.sentenceKo,
+          rounds: {}
+        }));
+        saveVocabToStorage();
+      }
+
+      // 2. 직전 세션(학습 위치, 선택 회차, Day) 복구
+      const savedSession = localStorage.getItem('kotoba_session_v4');
+      if (savedSession) {
+        try {
+          const s = JSON.parse(savedSession);
+          if (s.selectedDayChunks) selectedDayChunks = new Set(s.selectedDayChunks);
+          if (s.currentRound) currentRound = s.currentRound;
+          currentIndex = s.currentIndex || 0;
+        } catch(e) {}
+      }
+
+      refreshDayChunkButtonsUI();
+      updateRoundUI();
+      recalculateStudyPool(true);
+    });
+
+    /* 직전 세션 영구 저장 */
+    function saveSessionState() {
+      const sessionData = {
+        selectedDayChunks: Array.from(selectedDayChunks),
+        currentRound: currentRound,
+        currentIndex: currentIndex
+      };
+      localStorage.setItem('kotoba_session_v4', JSON.stringify(sessionData));
+    }
+
+    /* Day 구간 토글 */
+    function toggleDayChunk(chunkKey) {
+      if (selectedDayChunks.has(chunkKey)) {
+        if (selectedDayChunks.size > 1) selectedDayChunks.delete(chunkKey);
+      } else {
+        selectedDayChunks.add(chunkKey);
+      }
+      currentIndex = 0;
+      refreshDayChunkButtonsUI();
+      recalculateStudyPool(false);
+      saveSessionState();
+    }
+
+    function refreshDayChunkButtonsUI() {
+      ['1-15', '16-25', '26-35', '36-45'].forEach(chunk => {
+        const btn = document.getElementById(`chunk-${chunk}`);
+        if (!btn) return;
+        if (selectedDayChunks.has(chunk)) {
+          btn.className = 'chunk-btn py-1 rounded-lg text-xs font-bold border border-rose-500/50 bg-rose-500/20 text-rose-300';
+        } else {
+          btn.className = 'chunk-btn py-1 rounded-lg text-xs font-bold border border-slate-800 bg-slate-800/60 text-slate-400';
+        }
+      });
+      const labelArr = Array.from(selectedDayChunks).sort((a,b) => parseInt(a) - parseInt(b));
+      document.getElementById('selectedDaysLabel').innerText = labelArr.map(c => `Day ${c}`).join(', ');
+    }
+
+    function applyCustomDays() {
+      const s = parseInt(document.getElementById('customStartDay').value) || 1;
+      const e = parseInt(document.getElementById('customEndDay').value) || 15;
+      selectedDayChunks.clear();
+      selectedDayChunks.add(`${s}-${e}`);
+      document.getElementById('selectedDaysLabel').innerText = `Day ${s}~${e}`;
+      ['1-15', '16-25', '26-35', '36-45'].forEach(chunk => {
+        const btn = document.getElementById(`chunk-${chunk}`);
+        if (btn) btn.className = 'chunk-btn py-1 rounded-lg text-xs font-bold border border-slate-800 bg-slate-800/60 text-slate-400';
+      });
+      currentIndex = 0;
+      closeModal('customDayModal');
+      recalculateStudyPool(false);
+      saveSessionState();
+    }
+
+    /* 회독 수동 변경 */
+    function changeRound(round) {
+      currentRound = round;
+      currentIndex = 0;
+      updateRoundUI();
+      recalculateStudyPool(false);
+      saveSessionState();
+    }
+
+    function updateRoundUI() {
+      document.getElementById('currentRoundBadge').innerText = `${currentRound}회독`;
+      const buttons = document.querySelectorAll('#roundTabs .round-btn');
+      buttons.forEach((btn, idx) => {
+        if (idx + 1 === currentRound) {
+          btn.className = 'round-btn px-2 py-0.5 rounded text-xs font-black bg-amber-500 text-slate-950';
+        } else {
+          btn.className = 'round-btn px-2 py-0.5 rounded text-xs font-bold bg-slate-800 text-slate-400';
+        }
+      });
+    }
+
+    /* 엄격한 5회독 체인 로직 */
+    function recalculateStudyPool(preserveIndex = false) {
+      const allowedDays = new Set();
+      selectedDayChunks.forEach(chunk => {
+        const [start, end] = chunk.split('-').map(Number);
+        for (let i = start; i <= end; i++) allowedDays.add(i);
+      });
+
+      const dayFilteredWords = vocabularyList.filter(item => allowedDays.has(item.day));
+
+      if (currentRound === 1) {
+        currentStudyList = [...dayFilteredWords];
+      } else {
+        // N회차 대상 = N-1회차에서 '모름(known !== true)' 단어만 모아서 진행
+        const prevRound = currentRound - 1;
+        currentStudyList = dayFilteredWords.filter(item => {
+          return item.rounds && item.rounds[prevRound] === false;
+        });
+      }
+
+      if (!preserveIndex || currentIndex >= currentStudyList.length) {
+        currentIndex = 0;
+      }
+
+      document.getElementById('targetCountText').innerText = currentStudyList.length;
+      renderCurrentCard();
+    }
+
+    /* 카드 렌더링 */
+    function renderCurrentCard() {
+      isCardAnswerRevealed = false;
+      const readingEl = document.getElementById('wordReading');
+      const mainEl = document.getElementById('wordMain');
+      const meaningEl = document.getElementById('wordMeaning');
+      const hanjaEl = document.getElementById('hanjaBreakdown');
+      const sentenceSec = document.getElementById('sentenceSection');
+      const touchHint = document.getElementById('cardTouchHint');
+      const progressIndex = document.getElementById('progressIndex');
+      const cardDayTag = document.getElementById('cardDayTag');
+      const cardRoundTag = document.getElementById('cardRoundTag');
+
+      if (currentStudyList.length === 0) {
+        progressIndex.innerText = '진행: 0 / 0';
+        cardDayTag.innerText = 'Day -';
+        cardRoundTag.innerText = `${currentRound}회차 대상 없음`;
+        mainEl.innerText = currentRound === 1 ? '단어가 없습니다' : '🎉 회차 완료 (모든 단어 외움)';
+        mainEl.className = 'text-2xl font-bold text-slate-400 my-4';
+        readingEl.classList.add('hidden');
+        meaningEl.classList.add('hidden');
+        hanjaEl.classList.add('hidden');
+        sentenceSec.classList.add('hidden');
+        touchHint.innerText = '외운 단어들로 통과되었습니다';
+        return;
+      }
+
+      const item = currentStudyList[currentIndex];
+      progressIndex.innerText = `진행: ${currentIndex + 1} / ${currentStudyList.length}`;
+      cardDayTag.innerText = `Day ${item.day}`;
+      cardRoundTag.innerText = `${currentRound}회차 대상`;
+
+      mainEl.innerText = item.word;
+      mainEl.className = 'text-3xl sm:text-4xl font-black text-white tracking-wider my-0.5 font-serif';
+      readingEl.innerText = item.reading;
+      meaningEl.innerText = item.meaning;
+
+      renderHanjaBreakdown(item.word);
+      renderSentence(item);
+
+      readingEl.classList.add('hidden');
+      meaningEl.classList.add('hidden');
+      hanjaEl.classList.add('hidden');
+      sentenceSec.classList.add('hidden');
+      touchHint.innerText = '터치하여 발음 · 뜻 확인';
+
+      if (isTTSActive && currentIndex > 0) {
+        playTTS(item.reading || item.word);
+      }
+    }
+
+    /* 카드 터치 토글 */
+    function toggleCardAnswer() {
+      if (currentStudyList.length === 0) return;
+      isCardAnswerRevealed = !isCardAnswerRevealed;
+
+      const readingEl = document.getElementById('wordReading');
+      const meaningEl = document.getElementById('wordMeaning');
+      const hanjaEl = document.getElementById('hanjaBreakdown');
+      const sentenceSec = document.getElementById('sentenceSection');
+      const touchHint = document.getElementById('cardTouchHint');
+
+      if (isCardAnswerRevealed) {
+        readingEl.classList.remove('hidden');
+        meaningEl.classList.remove('hidden');
+        hanjaEl.classList.remove('hidden');
+        sentenceSec.classList.remove('hidden');
+        touchHint.innerText = '정답 열림 (터치 시 닫힘)';
+        if (isTTSActive) playTTS(currentStudyList[currentIndex].reading || currentStudyList[currentIndex].word);
+      } else {
+        readingEl.classList.add('hidden');
+        meaningEl.classList.add('hidden');
+        hanjaEl.classList.add('hidden');
+        sentenceSec.classList.add('hidden');
+        touchHint.innerText = '터치하여 발음 · 뜻 확인';
+      }
+    }
+
+    /* 한자 훈음 & 신자체 표시 */
+    function renderHanjaBreakdown(word) {
+      const container = document.getElementById('hanjaBreakdown');
+      container.innerHTML = '';
+      const chars = word.match(/[\u4e00-\u9faf\u3400-\u4dbf]/g) || [];
+      const uniqueChars = Array.from(new Set(chars));
+
+      if (uniqueChars.length === 0) {
+        container.classList.add('hidden');
+        return;
+      }
+
+      uniqueChars.forEach(char => {
+        const info = KOREAN_HANJA_DICT[char];
+        const span = document.createElement('span');
+        span.className = 'text-[11px] bg-slate-800/90 border border-slate-700 px-2 py-0.5 rounded text-amber-300 font-medium';
+        if (info) {
+          if (info.isShin) {
+            span.innerHTML = `<b class="text-white">${char}</b>: ${info.sound} <span class="text-[9px] text-rose-400 font-bold">[신자체: 原 ${info.origin}]</span>`;
+          } else {
+            span.innerHTML = `<b class="text-white">${char}</b>: ${info.sound}`;
+          }
+        } else {
+          span.innerHTML = `<b class="text-white">${char}</b>: 한자`;
+        }
+        container.appendChild(span);
+      });
+    }
+
+    function renderSentence(item) {
+      const jaEl = document.getElementById('sentenceJa');
+      const koEl = document.getElementById('sentenceKo');
+      if (!item.sentenceJa) {
+        jaEl.innerHTML = '';
+        koEl.innerText = '';
+        return;
+      }
+      koEl.innerText = item.sentenceKo || '';
+      applyRubySentence(item.sentenceJa);
+    }
+
+    function applyRubySentence(rawText) {
+      const jaEl = document.getElementById('sentenceJa');
+      let formatted = rawText.replace(/([一-龯]+)\(([^)]+)\)/g, '<ruby>$1<rt>$2</rt></ruby>');
+      jaEl.innerHTML = formatted;
+      if (!showFuriganaInSentence) {
+        jaEl.classList.add('furi-hidden');
+      } else {
+        jaEl.classList.remove('furi-hidden');
+      }
+    }
+
+    function toggleSentenceFurigana() {
+      showFuriganaInSentence = !showFuriganaInSentence;
+      const jaEl = document.getElementById('sentenceJa');
+      if (showFuriganaInSentence) jaEl.classList.remove('furi-hidden');
+      else jaEl.classList.add('furi-hidden');
+    }
+
+    /* 정답 처리 (외움 / 모름) */
+    function handleAnswer(isKnown) {
+      if (currentStudyList.length === 0) return;
+      const currentItem = currentStudyList[currentIndex];
+
+      if (!currentItem.rounds) currentItem.rounds = {};
+      currentItem.rounds[currentRound] = isKnown;
+      saveVocabToStorage();
+
+      if (currentIndex < currentStudyList.length - 1) {
+        currentIndex++;
+        renderCurrentCard();
+        saveSessionState();
+      } else {
+        // 회차 종료 판정
+        alert(`${currentRound}회차 학습이 끝났습니다!`);
+        if (currentRound < 5) {
+          currentRound++;
+          currentIndex = 0;
+          updateRoundUI();
+          recalculateStudyPool(false);
+          saveSessionState();
+        } else {
+          // 5회차 종료 -> 전체 리셋 옵션
+          if (confirm('🎉 5회독을 모두 완주하셨습니다!\n모든 회차 기록을 리셋하고 1회독부터 다시 시작하시겠습니까?')) {
+            resetAllRounds();
+          } else {
+            recalculateStudyPool(false);
+          }
+        }
+      }
+    }
+
+    /* 5회독 전체 리셋 */
+    function resetAllRounds() {
+      vocabularyList.forEach(item => { item.rounds = {}; });
+      saveVocabToStorage();
+      currentRound = 1;
+      currentIndex = 0;
+      updateRoundUI();
+      recalculateStudyPool(false);
+      saveSessionState();
+      alert('1회독부터 새롭게 시작합니다.');
+    }
+
+    /* 단어 관리 모달 & 전수 뷰어 */
+    function openManageModal() {
+      document.getElementById('totalWordCountLabel').innerText = vocabularyList.length;
+      switchManageTab('list');
+      renderRegisteredWordList(vocabularyList);
+      openModal('manageModal');
+    }
+
+    function switchManageTab(tab) {
+      if (tab === 'list') {
+        document.getElementById('tabBtnList').className = 'font-bold text-xs px-2.5 py-1 rounded-lg bg-rose-600 text-white';
+        document.getElementById('tabBtnAdd').className = 'font-bold text-xs px-2.5 py-1 rounded-lg bg-slate-800 text-slate-400';
+        document.getElementById('manageTabList').classList.remove('hidden');
+        document.getElementById('manageTabAdd').classList.add('hidden');
+      } else {
+        document.getElementById('tabBtnList').className = 'font-bold text-xs px-2.5 py-1 rounded-lg bg-slate-800 text-slate-400';
+        document.getElementById('tabBtnAdd').className = 'font-bold text-xs px-2.5 py-1 rounded-lg bg-rose-600 text-white';
+        document.getElementById('manageTabList').classList.add('hidden');
+        document.getElementById('manageTabAdd').classList.remove('hidden');
+      }
+    }
+
+    function renderRegisteredWordList(words) {
+      const container = document.getElementById('wordListContainer');
+      container.innerHTML = '';
+
+      if (words.length === 0) {
+        container.innerHTML = '<div class="text-center text-slate-500 py-6">등록된 단어가 없습니다.</div>';
+        return;
+      }
+
+      words.forEach((item, idx) => {
+        const div = document.createElement('div');
+        div.className = 'bg-slate-950 border border-slate-800/80 rounded-xl p-2.5 flex items-start justify-between gap-2';
+        
+        // 한자 훈음 요약 텍스트
+        const chars = item.word.match(/[\u4e00-\u9faf]/g) || [];
+        const hanjaNotes = chars.map(c => {
+          const info = KOREAN_HANJA_DICT[c];
+          return info ? `${c}(${info.sound})` : c;
+        }).join(' ');
+
+        div.innerHTML = `
+          <div class="flex-1">
+            <div class="flex items-center gap-1.5">
+              <span class="text-[10px] font-bold px-1.5 py-0.2 rounded bg-slate-800 text-amber-400">Day ${item.day}</span>
+              <span class="font-bold text-base text-white">${item.word}</span>
+              <span class="text-emerald-400 text-xs font-medium">【${item.reading}】</span>
+            </div>
+            <div class="text-slate-300 font-semibold text-xs mt-0.5">${item.meaning}</div>
+            ${hanjaNotes ? `<div class="text-[10px] text-amber-300/80 mt-0.5"><i class="fa-solid fa-book-open mr-1"></i>${hanjaNotes}</div>` : ''}
+            ${item.sentenceJa ? `<div class="text-[11px] text-slate-400 mt-1 pl-1.5 border-l-2 border-slate-700">${item.sentenceJa} <span class="text-slate-500">(${item.sentenceKo || ''})</span></div>` : ''}
+          </div>
+          <button onclick="deleteSingleWord('${item.id || idx}')" class="text-slate-600 hover:text-rose-400 p-1">
+            <i class="fa-regular fa-trash-can"></i>
+          </button>
+        `;
+        container.appendChild(div);
+      });
+    }
+
+    function filterWordList() {
+      const query = document.getElementById('wordSearchInput').value.trim().toLowerCase();
+      if (!query) {
+        renderRegisteredWordList(vocabularyList);
+        return;
+      }
+      const filtered = vocabularyList.filter(item => {
+        return item.word.toLowerCase().includes(query) ||
+               item.reading.toLowerCase().includes(query) ||
+               item.meaning.toLowerCase().includes(query);
+      });
+      renderRegisteredWordList(filtered);
+    }
+
+    function deleteSingleWord(idOrIdx) {
+      if (!confirm('이 단어를 삭제하시겠습니까?')) return;
+      vocabularyList = vocabularyList.filter((item, idx) => (item.id || idx) !== idOrIdx);
+      saveVocabToStorage();
+      document.getElementById('totalWordCountLabel').innerText = vocabularyList.length;
+      filterWordList();
+      recalculateStudyPool(false);
+    }
+
+    /* 사진 다중 첨부 & 예문 자동 보완 */
+    function handleImageBatchSelect(input) {
+      const files = input.files;
+      if (!files || files.length === 0) return;
+      const statusEl = document.getElementById('imageSelectStatus');
+      statusEl.classList.remove('hidden');
+      statusEl.innerText = `${files.length}장의 사진이 선택되었습니다. (단어 자동 추출 준비)`;
+      
+      const sDay = parseInt(document.getElementById('regStartDay').value) || 3;
+      let mockList = `// 사진 ${files.length}장 추출 단어 목록 (Day ${sDay})\n`;
+      mockList += `${sDay} / 勉強 / べんきょう / 공부 / 日本語(にほんご)を勉強(べんきょう)する。\n`;
+      mockList += `${sDay} / 散歩 / さんぽ / 산책 / 朝(あさ)散歩(さんぽ)をする。\n`;
+      document.getElementById('bulkTextInput').value += "\n" + mockList;
+    }
+
+    function autoFillExamples() {
+      const textarea = document.getElementById('bulkTextInput');
+      const lines = textarea.value.split('\n');
+      const updatedLines = [];
+      lines.forEach(line => {
+        const trimmed = line.trim();
+        if (!trimmed || trimmed.startsWith('//')) {
+          updatedLines.push(line);
+          return;
+        }
+        const parts = trimmed.split('/').map(p => p.trim());
+        if (parts.length >= 4) {
+          const day = parts[0];
+          const word = parts[1];
+          const reading = parts[2];
+          const meaning = parts[3];
+          let sentence = parts[4] || `${word}(${reading})を使う。`;
+          updatedLines.push(`${day} / ${word} / ${reading} / ${meaning} / ${sentence}`);
+        } else {
+          updatedLines.push(line);
+        }
+      });
+      textarea.value = updatedLines.join('\n');
+      alert('예문이 없는 단어에 기본 예문이 자동으로 보완되었습니다.');
+    }
+
+    function saveBulkWords() {
+      const textarea = document.getElementById('bulkTextInput');
+      const lines = textarea.value.split('\n');
+      let newCount = 0;
+
+      lines.forEach(line => {
+        const trimmed = line.trim();
+        if (!trimmed || trimmed.startsWith('//')) return;
+        const parts = trimmed.split('/').map(p => p.trim());
+        if (parts.length >= 4) {
+          vocabularyList.push({
+            id: 'v_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5),
+            day: parseInt(parts[0]) || 1,
+            word: parts[1],
+            reading: parts[2],
+            meaning: parts[3],
+            sentenceJa: parts[4] || `${parts[1]}の例文です。`,
+            sentenceKo: parts[5] || `${parts[3]}의 예문입니다.`,
+            rounds: {}
+          });
+          newCount++;
+        }
+      });
+
+      saveVocabToStorage();
+      textarea.value = '';
+      openManageModal();
+      recalculateStudyPool(false);
+      alert(`${newCount}개의 단어가 성공적으로 추가되었습니다.`);
+    }
+
+    /* 저장 및 발음 */
+    function saveVocabToStorage() {
+      localStorage.setItem('kotoba_vocab_v4', JSON.stringify(vocabularyList));
+    }
+
+    function playTTS(text) {
+      if (!('speechSynthesis' in window)) return;
+      window.speechSynthesis.cancel();
+      const u = new SpeechSynthesisUtterance(text);
+      u.lang = 'ja-JP';
+      u.rate = 0.9;
+      window.speechSynthesis.speak(u);
+    }
+
+    function playCurrentWordAudio() {
+      if (currentStudyList.length === 0) return;
+      playTTS(currentStudyList[currentIndex].reading || currentStudyList[currentIndex].word);
+    }
+
+    function toggleTTS() {
+      isTTSActive = !isTTSActive;
+      const btn = document.getElementById('ttsToggleBtn');
+      if (isTTSActive) {
+        btn.className = 'w-8 h-8 rounded-lg bg-slate-800 text-emerald-400 flex items-center justify-center border border-slate-700 active:bg-slate-700';
+      } else {
+        btn.className = 'w-8 h-8 rounded-lg bg-slate-800 text-slate-500 flex items-center justify-center border border-slate-700 active:bg-slate-700';
+      }
+    }
+
+    function openModal(id) { document.getElementById(id).classList.remove('hidden'); }
+    function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
+  </script>
+</body>
+</html>
